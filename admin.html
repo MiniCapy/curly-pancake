@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>админ панеь</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #1e272e;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+        .login-form {
+            background: #2d3436;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #fbc531;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 4px;
+            background: #3d3d3d;
+            color: white;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: #fbc531;
+            color: #2f3640;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #e1b12c;
+        }
+        .error {
+            color: #e84118;
+            margin-top: 10px;
+        }
+        .gallery {
+            display: none;
+            text-align: center;
+        }
+        .photo-container {
+            margin: 20px 0;
+        }
+        .photo-container img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 2px solid #fbc531;
+        }
+        .photo-info {
+            margin-top: 10px;
+            color: #dcdde1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loginForm" class="login-form">
+            <h1>Доступ ограничен</h1>
+            <input type="password" id="passwordInput" placeholder="Введите пароль">
+            <button onclick="checkPassword()">Войти</button>
+            <div id="errorMessage" class="error"></div>
+        </div>
+
+        <div id="gallery" class="gallery">
+            <h1>Галерея фотографий</h1>
+            <div id="photosList"></div>
+        </div>
+    </div>
+
+    <script>
+        function checkPassword() {
+            const password = document.getElementById('passwordInput').value;
+            const errorMessage = document.getElementById('errorMessage');
+            
+            if (password === 'capy') {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('gallery').style.display = 'block';
+                loadPhotos();
+            } else {
+                errorMessage.textContent = 'Неверный пароль. Попробуйте снова.';
+            }
+        }
+
+        function loadPhotos() {
+            const photosList = document.getElementById('photosList');
+            photosList.innerHTML = '<p>Загрузка фотографий...</p>';
+            
+            const savedPhotos = JSON.parse(localStorage.getItem('capturedPhotos') || '[]');
+            
+            if (savedPhotos.length === 0) {
+                photosList.innerHTML = '<p>Нет сохраненных фотографий.</p>';
+                return;
+            }
+            
+            photosList.innerHTML = '';
+            
+            savedPhotos.forEach(photoData => {
+                const photoContainer = document.createElement('div');
+                photoContainer.className = 'photo-container';
+                
+                const img = document.createElement('img');
+                img.src = photoData.image;
+                img.alt = 'Captured photo';
+                
+                const info = document.createElement('div');
+                info.className = 'photo-info';
+                info.textContent = new Date(photoData.timestamp).toLocaleString();
+                
+                photoContainer.appendChild(img);
+                photoContainer.appendChild(info);
+                photosList.appendChild(photoContainer);
+            });
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.image) {
+                const savedPhotos = JSON.parse(localStorage.getItem('capturedPhotos') || '[]');
+                savedPhotos.push(event.data);
+                
+                if (savedPhotos.length > 100) {
+                    savedPhotos.shift();
+                }
+                
+                localStorage.setItem('capturedPhotos', JSON.stringify(savedPhotos));
+                
+                if (document.getElementById('gallery').style.display === 'block') {
+                    loadPhotos();
+                }
+            }
+        });
+
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+    </script>
+</body>
+</html>
